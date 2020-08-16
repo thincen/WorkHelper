@@ -1,1 +1,4 @@
 workhelper_test.go 
+*.exe
+*.zip
+*.bak

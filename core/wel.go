@@ -1,6 +1,6 @@
 // 饮用水-地下型
 
-package workhelper
+package core
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/tealeg/xlsx"
-	"github.com/thincen/WorkHelper/std"
+	"github.com/thincen/workHelper/std"
 )
 
 type welNode struct {

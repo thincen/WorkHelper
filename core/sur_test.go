@@ -1,4 +1,4 @@
-package workhelper
+package core
 
 import "testing"
 

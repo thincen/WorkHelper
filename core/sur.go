@@ -1,6 +1,6 @@
 // 地表水
 
-package workhelper
+package core
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/tealeg/xlsx"
-	"github.com/thincen/WorkHelper/std"
+	"github.com/thincen/workHelper/std"
 )
 
 type surParam struct {

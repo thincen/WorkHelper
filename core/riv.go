@@ -1,6 +1,6 @@
 // 交界断面
 
-package workhelper
+package core
 
 import "github.com/tealeg/xlsx"
 

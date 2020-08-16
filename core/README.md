@@ -58,13 +58,13 @@ package main
 
 import (
 	"fmt"
-	wh "github.com/thincen/WorkHelper"
+	"github.com/thincen/workHelper/core"
 )
 
 func main() {
 	inputFile := "path/to/input/file"
 	outputFile := "path/to/output/file"
-	task := wh.NewTask(inputFile, outputFile, wh.Sur)
+	task := core.NewTask(inputFile, outputFile, wh.Sur)
 	if err := task.Run(); err != nil {
 		fmt.Println(err)
 	}

@@ -1,14 +1,14 @@
 // 2020.8.7
 // 提供处理 地表水/地下水 逻辑
 
-package workhelper
+package core
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/thincen/WorkHelper/std"
+	"github.com/thincen/workHelper/std"
 )
 
 // Tag 处理模块标识
