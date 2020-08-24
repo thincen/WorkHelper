@@ -17,7 +17,7 @@ type Task struct {
 }
 
 // NewTask 创建新的分析表格任务,使用内部默认标准,返回*Task
-func NewTask(input, output string, mod Tag,) *Task {
+func NewTask(input, output string, mod Tag) *Task {
 	return &Task{
 		Module: mod,
 		Input:  input,
@@ -29,7 +29,7 @@ func NewTask(input, output string, mod Tag,) *Task {
 // 处理input 生成结果文件
 func (task *Task) Run(a ...interface{}) error {
 	var (
-		webView bool = false 
+		webView bool = false
 	)
 	for _, v := range a {
 		switch reflect.ValueOf(v).Kind() {
@@ -52,7 +52,7 @@ func (task *Task) handle(f *xlsx.File, webView bool) error {
 	case Wel:
 		return handleWel(f, task)
 	case Riv:
-		return handleRiv(f, task.Input, task.Output, webView)
+		return handleRiv(f, task, webView)
 	default:
 		return nil
 	}

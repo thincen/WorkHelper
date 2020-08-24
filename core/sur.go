@@ -17,11 +17,11 @@ type surParam struct {
 	*param
 	useCol     int //= 15 // 取水量列号
 	surTypeCol int //= 11 // 地表水类型列号
-	townCol    int //= 6  // 乡镇名
+	townCol    int //= 6  // 乡镇名/测站名称
 }
 type surNode struct {
 	*node
-	town string
+	town string // 乡镇名称
 	use  string // 取水量
 	tag  string // 河流/湖库
 	ps   string // 地表水不参与评价的信息
@@ -60,7 +60,7 @@ func handleSur(f *xlsx.File, task *Task) error {
 
 	for row := p.dataRow; row < sh.MaxRow; row++ {
 		data := sh.Rows[row]
-		go p.handleRow(data, ch, wg)
+		go p.handleRow(data, ch, wg, nil)
 	}
 
 	chErr := make(chan error)
@@ -77,9 +77,19 @@ func handleSur(f *xlsx.File, task *Task) error {
 }
 
 // 处理每行数据
-func (p *surParam) handleRow(row *xlsx.Row, chNode chan<- *surNode, wg *sync.WaitGroup) {
+func (p *surParam) handleRow(row *xlsx.Row, chNode chan<- *surNode, wg *sync.WaitGroup, surnode *surNode) {
 	defer wg.Done()
-	oneNode := &surNode{node: &node{}}
+	var oneNode *surNode
+	if surnode == nil {
+		oneNode = &surNode{node: &node{}}
+		oneNode.use = row.Cells[p.useCol].String()
+		oneNode.tag = row.Cells[p.surTypeCol].String() // 湖库/河流
+		oneNode.name = row.Cells[p.nameCol].String()
+		oneNode.town = row.Cells[p.townCol].String()
+	} else {
+		oneNode = surnode
+	}
+
 	var (
 		ltLimitKeys  = make([]string, 0)
 		noHandleKeys = make([]string, 0)
@@ -88,15 +98,12 @@ func (p *surParam) handleRow(row *xlsx.Row, chNode chan<- *surNode, wg *sync.Wai
 		nh3          float64
 		tn           float64
 	)
-	oneNode.name = row.Cells[p.nameCol].String()
-	oneNode.town = row.Cells[p.townCol].String()
-	oneNode.use = row.Cells[p.useCol].String()
-	oneNode.tag = row.Cells[p.surTypeCol].String() // 湖库/河流
+
 	var (
 		levels = make([]int, p.keyLen)
 	)
 	for i := p.keyCol; i < p.keyCol+p.keyLen; i++ {
-		oneKey := p.handleSinKey(row, i)
+		oneKey := p.handleSinKey(row, i, oneNode.tag)
 		if strings.HasPrefix(oneKey.key, "总氮") {
 			tn = oneKey.fvalue
 		}
@@ -144,20 +151,29 @@ func initSurParam() *surParam {
 	}
 }
 
-func (p *surParam) handleSinKey(f *xlsx.Row, col int) *sinKey {
+func (p *surParam) handleSinKey(f *xlsx.Row, col int, tag string) *sinKey {
 	var (
 		sk    = &sinKey{lv: &level{}}
 		key   = f.Sheet.Rows[p.keyRow].Cells[col].String()
 		value = strings.TrimSpace(f.Cells[col].String())
-		tag   = f.Cells[p.surTypeCol].String() // 湖库/河流
 		e     error
 	)
+	// if tagB {
+	// 	tag = "河流"
+	// } else {
+	// 	tag = f.Cells[p.surTypeCol].String() // 湖库/河流
+	// }
 	key = formatKey(key)
 	key = formatTpTn(key, tag)
 	sk.key = key
+	if value == "-1" {
+		sk.fvalue = -1
+		return sk
+	}
 	if e = sk.parseFloat(value); e != nil {
 		return sk
 	}
+
 	// pH
 	if strings.ToLower(key) == "ph" {
 		sk.surPH(sk.fvalue)

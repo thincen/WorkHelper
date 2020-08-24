@@ -21,6 +21,8 @@ type mwin struct {
 	showAboutBoxAction *walk.Action
 	width              int
 	height             int
+	checkbox           *walk.CheckBox
+	stdFile            string
 }
 
 // 菜单栏
@@ -49,9 +51,11 @@ func (mw *mwin) usage() *Composite {
 		Children: []Widget{
 			Label{
 				AssignTo: &mw.lb,
-				Text: `1. 点击Open/拖放 选择上报模板
-2. 选择结果存放位置(默认为第1步选择文件所在路径下生成res.xlsx文件)
-3. Run`,
+				Text: `1.修改template文件夹中模板文件点位及检测数据
+【注意】不要修改模板原有格式
+2. 点击Open/拖放 选择上报模板xlsx文件
+3. 选择结果存放位置(默认为第1步选择文件所在路径下生成res.xlsx/RivRes.xlsx文件)
+4. Run`,
 			},
 		},
 	}
@@ -67,20 +71,44 @@ func (mw *mwin) selectFunc() *Composite {
 			// 下拉选项
 			ComboBox{
 				AssignTo:     &mw.cb,
-				CurrentIndex: 0,
+				CurrentIndex: 2,
 				Model:        []string{"地表水型饮用水源地", "地下水型饮用水源地", "交界断面"},
 				OnCurrentIndexChanged: func() {
 					tag = mw.cb.CurrentIndex()
-					if tag == 2 {
-						walk.MsgBox(mw, "模块未开发完成", "当前未开发交界断面功能", walk.MsgBoxIconStop)
-						mw.cb.SetCurrentIndex(0)
-						tag = 0
-					}
 				},
+			},
+			CheckBox{
+				AssignTo:         &mw.checkbox,
+				Text:             "自定义标准文件(慎用)",
+				OnCheckedChanged: mw.checkboxOnChanged,
+				ToolTipText:      "建议使用template中标准文件修改",
 			},
 			// 空格占满
 			VSpacer{},
 		},
+	}
+}
+
+// 自定义外部标准文件
+func (mw *mwin) checkboxOnChanged() {
+	if mw.checkbox.CheckState() == win.BST_CHECKED {
+		dlg := new(walk.FileDialog)
+		dlg.Title = "选择文件"
+		dlg.Filter = "标准文件 (*.csv)|*.csv|所有文件|*.*"
+		accepted, err := dlg.ShowOpen(mw)
+		if err != nil {
+			walk.MsgBox(mw, "OpenDlgErr", err.Error(), walk.MsgBoxIconError)
+			return
+		}
+		if !accepted {
+			mw.checkbox.SetChecked(false)
+		} else {
+			mw.stdFile = dlg.FilePath
+			mw.checkbox.SetToolTipText(dlg.FilePath)
+		}
+	} else {
+		mw.stdFile = ""
+		mw.checkbox.SetToolTipText("建议使用template中标准文件修改")
 	}
 }
 
@@ -128,35 +156,36 @@ func (mw *mwin) selectFile() {
 	dlg := new(walk.FileDialog)
 	dlg.Title = "选择文件"
 	dlg.Filter = "上报表格 (*.xlsx)|*.xlsx"
-
 	// mw.leInput.SetText("") //通过重定向变量设置TextEdit的Text
-	if _, err := dlg.ShowOpen(mw); err != nil {
+	accepted, err := dlg.ShowOpen(mw)
+	if err != nil {
 		walk.MsgBox(mw, "OpenDlgErr", err.Error(), walk.MsgBoxIconError)
 		return
 	}
-	mw.leInput.SetText(dlg.FilePath)
-	mw.inputChanged()
-}
-
-func (mw *mwin) inputChanged() {
-	// inputfile = mw.leInput.Text()
-	// if !mw.checkinput(mw.leInput.Text()) {
-	// 	return
-	// }
-	var inputfiledir = filepath.Dir(mw.leInput.Text())
-	if mw.leOutput.Text() == "" {
-		mw.leOutput.SetText(inputfiledir + "\\res.xlsx")
-	} else if inputfiledir != filepath.Dir(mw.leOutput.Text()) {
-		if walk.MsgBox(mw, "文件保存位置", "处理文件的路径已更改,是否生成默认保存位置?\n\n默认保存在要处理表格文件同级目录下", walk.MsgBoxYesNo|walk.MsgBoxIconQuestion) == 6 {
-			// outputfile = filepath.Dir(mw.leInput.Text()) + "\\res.xlsx"
-			mw.leOutput.SetText(inputfiledir + "\\res.xlsx")
-		}
+	if accepted {
+		mw.leInput.SetText(dlg.FilePath)
+		mw.inputChanged()
 	}
 }
 
-// func (mw *win) outputChanged() {
-// 	outputfile = mw.leOutput.Text()
-// }
+func (mw *mwin) inputChanged() {
+	var (
+		inputfiledir = filepath.Dir(mw.leInput.Text())
+		outputfile   string
+	)
+	if tag != 2 {
+		outputfile = inputfiledir + "\\res.xlsx"
+	} else {
+		outputfile = inputfiledir + "\\RivRes.xlsx"
+	}
+	if mw.leOutput.Text() == "" {
+		mw.leOutput.SetText(outputfile)
+	} else if inputfiledir != filepath.Dir(mw.leOutput.Text()) {
+		if walk.MsgBox(mw, "文件保存位置", "处理文件的路径已更改,是否生成默认保存位置?\n\n默认保存在要处理表格文件同级目录下", walk.MsgBoxYesNo|walk.MsgBoxIconQuestion) == 6 {
+			mw.leOutput.SetText(outputfile)
+		}
+	}
+}
 
 func (mw *mwin) saveFile() {
 	dlg := new(walk.FileDialog)
@@ -177,14 +206,25 @@ func (mw *mwin) handleData() {
 	if !mw.checkinput(inputfile) {
 		return
 	}
-	task := core.NewTask(inputfile, outputfile, core.Tag(tag))
+	// task := core.NewTask(inputfile, outputfile, core.Tag(tag))
+	task := &core.Task{
+		Input:   inputfile,
+		Output:  outputfile,
+		StdFile: mw.stdFile,
+		Module:  core.Tag(tag),
+	}
 	if err := task.Run(); err != nil {
 		walk.MsgBox(mw, "error", err.Error(), walk.MsgBoxIconError)
 		return
 	}
-	// res := fmt.Sprintf("处理完毕\n处理信息%d条,%s", task.Count, task.Percent+"保存结果文件："+outputfile)
 	res := "处理完毕\n\n" + task.Detail + "\n详细信息保存在文件：" + outputfile
-	walk.MsgBox(mw, "完成", res, walk.MsgBoxIconInformation)
+	if walk.MsgBox(mw, "完成", res+"\n\n是否打开查看结果？", walk.MsgBoxYesNo|walk.MsgBoxIconQuestion) == 6 {
+		cmd := exec.Command("explorer", outputfile)
+		err := cmd.Start()
+		if err != nil {
+			walk.MsgBox(mw, "打开失败", err.Error(), walk.MsgBoxIconError)
+		}
+	}
 }
 
 func (mw *mwin) showAboutBoxActionTriggered() {
@@ -192,8 +232,8 @@ func (mw *mwin) showAboutBoxActionTriggered() {
 	// 		NAME+`
 	// 版本号: `+VERSION+`
 	// 构建时间: `+BUILDDAY+`
-	// 反馈: lgxlyh@qq.com`+`
-	// 仓库地址: https://github.com/lgxnas/data-helper-go`,
+	// 反馈: no_1seed@163.com`+`
+	// 仓库地址: https://github.com/thincen/workHelper`,
 	// 		0)
 	Dialog{
 		Title: "关于",
@@ -226,9 +266,7 @@ func (mw *mwin) showAboutBoxActionTriggered() {
 			LinkLabel{
 				Text: `反馈: <a id="mail" href="mailto:no_1seed@163.com">no_1seed@163.com</a>`,
 				OnLinkActivated: func(link *walk.LinkLabelLink) {
-					// log.Printf("id: '%s', url: '%s'\n", link.Id(), link.URL())
-					// cmd := exec.Command("cmd", "/C", "start", "mailto:lgxlyh@hotmail.com")
-					cmd := exec.Command("explorer", "mailto:lgxlyh@hotmail.com")
+					cmd := exec.Command("explorer", "mailto:no_1seed@163.com")
 					err := cmd.Start()
 					if err != nil {
 						walk.MsgBox(mw, "反馈", err.Error(), walk.MsgBoxIconError)

@@ -163,7 +163,7 @@ func welSave(file string, nodes <-chan *welNode, res *result) error {
 }
 func (res *result) detail() string {
 	return fmt.Sprintf("共处理点位: %d 个,超标: %d 个,达标率: %s\n",
-		res.total, res.total-res.pass, percent(res.total,res.pass))
+		res.total, res.total-res.pass, percent(res.total, res.pass))
 }
 
 func (p *welParam) handleSinKey(f *xlsx.Row, col int) *sinKey {

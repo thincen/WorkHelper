@@ -64,10 +64,13 @@ func maxLevel(levels []int) int {
 
 // 检查地表水氨氮和总氮逻辑
 func checkNH3TN(cNH3, cTN float64) string {
-	if cNH3 > cTN {
-		return "氨氮>总氮;"
+	if cTN == -1 || cNH3 <= cTN {
+		return ""
 	}
-	return ""
+	// if cNH3 > cTN {
+	return "氨氮>总氮;"
+	// }
+	// return ""
 }
 func err(keys []string, strPre string, strSuf string) string {
 	if len(keys) > 0 {

@@ -14,12 +14,17 @@ func main() {
 	mw := new(mwin)
 	mw.width = 300
 	mw.height = 200
+	ico, e := walk.NewImageFromFile("logo48.ico")
+	if e != nil {
+		ico = walk.IconApplication()
+	}
 	err := MainWindow{
 		AssignTo: &mw.MainWindow,
 		Title:    "个人工作助手",
 		MinSize:  Size{Width: mw.width, Height: mw.height},
 		// Size:     Size{Width: 300, Height: 200},
-		Icon:   "logo48.ico",
+		// Icon:   "logo48.ico",
+		Icon:   ico,
 		Layout: VBox{},
 		Font: Font{
 			PointSize: 9,
@@ -27,6 +32,7 @@ func main() {
 		},
 		OnDropFiles: func(files []string) {
 			mw.leInput.SetText(files[0])
+			mw.inputChanged()
 		},
 		MenuItems: *mw.menuInit(), // 菜单栏
 		Children: []Widget{
