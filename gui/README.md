@@ -5,6 +5,7 @@
 ## Build
 
 ```shell
+# windows
 set GOARCH=386
 go build -ldflags "-s -w -X 'main.VERSION=0.1.0' -X 'main.NAME=WorkHelper' -H=windowsgui" -o ../bin/WorkHelper_win_386.exe -v
 # set GOARCH=amd64

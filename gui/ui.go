@@ -1,6 +1,8 @@
 package main
 
 import (
+	"io/ioutil"
+	"net/http"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -19,6 +21,7 @@ type mwin struct {
 	leOutput           *walk.LineEdit
 	cb                 *walk.ComboBox
 	showAboutBoxAction *walk.Action
+	checkUpdateAction  *walk.Action
 	width              int
 	height             int
 	checkbox           *walk.CheckBox
@@ -31,6 +34,11 @@ func (mw *mwin) menuInit() *[]MenuItem {
 		Menu{
 			Text: "&Help",
 			Items: []MenuItem{
+				Action{
+					AssignTo:    &mw.checkUpdateAction,
+					Text:        "&Check Update",
+					OnTriggered: mw.checkUpdate,
+				},
 				Action{
 					AssignTo:    &mw.showAboutBoxAction,
 					Text:        "&About",
@@ -51,11 +59,20 @@ func (mw *mwin) usage() *Composite {
 		Children: []Widget{
 			Label{
 				AssignTo: &mw.lb,
-				Text: `1.修改template文件夹中模板文件点位及检测数据
-【注意】不要修改模板原有格式
-2. 点击Open/拖放 选择上报模板xlsx文件
-3. 选择结果存放位置(默认为第1步选择文件所在路径下生成res.xlsx/RivRes.xlsx文件)
-4. Run`,
+				Text: `1.修改 template 文件夹中模板文件点位及检测数据
+2. 点击 Open/拖放 选择上报模板xlsx文件
+3. 选择结果存放位置(默认保存res/RivRes.xlsx文件在步骤2文件同路径下)
+4. 点击 Run`,
+			},
+			LinkLabel{
+				Text: `Visit <a href="https://github.com/thincen/workHelper">thincen/workHelper</a> for more information`,
+				OnLinkActivated: func(link *walk.LinkLabelLink) {
+					cmd := exec.Command("explorer", "https://github.com/thincen/workHelper")
+					err := cmd.Start()
+					if err != nil {
+						walk.MsgBox(mw, "打开项目仓库失败", err.Error(), walk.MsgBoxIconError)
+					}
+				},
 			},
 		},
 	}
@@ -321,4 +338,35 @@ func (mw *mwin) checkinput(file string) bool {
 		return true
 	}
 	return true
+}
+func (mw *mwin) checkUpdate() {
+	check := func() {
+		res, err := http.Get("https://raw.githubusercontent.com/thincen/workHelper/dev/makefile")
+		if err != nil {
+			walk.MsgBox(mw, "Update", "检查更新失败\n"+err.Error(), walk.MsgBoxIconError)
+			return
+		}
+		defer res.Body.Close()
+		var (
+			line string
+		)
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			walk.MsgBox(mw, "Update", "检查更新时未找到云端版本号\n"+err.Error(), walk.MsgBoxIconError)
+			return
+		}
+		lines := strings.Split(string(body), "\n")
+		for _, line = range lines {
+			if strings.Compare("VERSION=", string(line[:8])) == 0 {
+				break
+			}
+		}
+		remoteversion := line[8:]
+		if VERSION != remoteversion {
+			walk.MsgBox(mw, "Update", "最新版本: "+remoteversion+"\n\n当前版本: "+VERSION+"\n\n", walk.MsgBoxIconInformation)
+		} else {
+			walk.MsgBox(mw, "Update", "当前为最新版本\n\n^_^", walk.MsgBoxIconInformation)
+		}
+	}
+	go check()
 }
