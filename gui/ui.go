@@ -36,7 +36,7 @@ func (mw *mwin) menuInit() *[]MenuItem {
 			Items: []MenuItem{
 				Action{
 					AssignTo:    &mw.checkUpdateAction,
-					Text:        "&Check Update",
+					Text:        "&Update",
 					OnTriggered: mw.checkUpdate,
 				},
 				Action{
@@ -245,13 +245,14 @@ func (mw *mwin) handleData() {
 }
 
 func (mw *mwin) showAboutBoxActionTriggered() {
-	// 	walk.MsgBox(mw, "About",
-	// 		NAME+`
-	// 版本号: `+VERSION+`
-	// 构建时间: `+BUILDDAY+`
-	// 反馈: no_1seed@163.com`+`
-	// 仓库地址: https://github.com/thincen/workHelper`,
-	// 		0)
+	var (
+		issuesURL  = "https://github.com/thincen/workHelper/issues"
+		email      = "no_1seed@163.com"
+		linkLbText = `反馈:
+<a href="mailto:` + email + `">` + email + `</a>
+
+<a href="` + issuesURL + `">` + issuesURL + "</a>"
+	)
 	Dialog{
 		Title: "关于",
 		Layout: VBox{
@@ -281,22 +282,13 @@ func (mw *mwin) showAboutBoxActionTriggered() {
 			Label{Text: "版本号: " + VERSION},
 			Label{Text: "构建时间: " + BUILDDAY},
 			LinkLabel{
-				Text: `反馈: <a id="mail" href="mailto:no_1seed@163.com">no_1seed@163.com</a>`,
+				// Text: "反馈: \n<a id=\"mail\" href=\"mailto:no_1seed@163.com\">no_1seed@163.com</a>\n\n<a id=\"issues\" href=\"https://github.com/thincen/workHelper/issues\">https://github.com/thincen/workHelper/issues</a>",
+				Text: linkLbText,
 				OnLinkActivated: func(link *walk.LinkLabelLink) {
-					cmd := exec.Command("explorer", "mailto:no_1seed@163.com")
+					cmd := exec.Command("explorer", link.URL())
 					err := cmd.Start()
 					if err != nil {
 						walk.MsgBox(mw, "反馈", err.Error(), walk.MsgBoxIconError)
-					}
-				},
-			},
-			LinkLabel{
-				Text: `仓库地址：<a href="https://github.com/thincen/workHelper">https://github.com/thincen/workHelper</a>`,
-				OnLinkActivated: func(link *walk.LinkLabelLink) {
-					cmd := exec.Command("explorer", "https://github.com/thincen/workHelper")
-					err := cmd.Start()
-					if err != nil {
-						walk.MsgBox(mw, "打开项目仓库失败", err.Error(), walk.MsgBoxIconError)
 					}
 				},
 			},

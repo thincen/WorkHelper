@@ -4,3 +4,4 @@ workhelper_test.go
 *.bak
 .vscode
 test
+release
