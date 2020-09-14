@@ -48,6 +48,9 @@ func formatKey(key string) string {
 }
 
 func levelToString(level int) string {
+	if level==0{
+		return ""
+	}
 	var lvs = []string{"Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "劣Ⅴ"}
 	return lvs[level-1]
 }
