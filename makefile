@@ -1,7 +1,7 @@
 # 名称
 BINARY_NAME=WorkHelper
 # 版本号
-VERSION=0.1-beta.0
+VERSION=0.1-beta.1
 # 编译时间
 DATE=`date +%F`
 # 减小体积
