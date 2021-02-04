@@ -6,7 +6,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	"github.com/tealeg/xlsx"
-	"github.com/thincen/whserver/std"
+	"github.com/thincen/workHelper/std"
 )
 
 // web data

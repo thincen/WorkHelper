@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/tealeg/xlsx"
-	"github.com/thincen/whserver/std"
+	"github.com/thincen/workHelper/std"
 )
 
 // Option 设置参数
