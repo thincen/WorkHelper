@@ -1,4 +1,4 @@
-module github.com/thincen/whserver
+module github.com/thincen/workHelper
 
 go 1.15
 
