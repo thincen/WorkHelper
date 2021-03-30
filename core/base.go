@@ -78,7 +78,7 @@ func (ec errCode) Error() string {
 
 // level 0-5 return "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "劣Ⅴ"
 func (l Level) string() string {
-	if l > L5 {
+	if l > L6 {
 		return "/"
 	}
 	str := [...]string{"Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "劣Ⅴ"}

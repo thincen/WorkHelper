@@ -131,10 +131,10 @@ func (d *riv) handleRow(row int) *xlsx.File {
 		value = data.Cells[i].String()
 		d.res[row] = d.handleKey(key, value, r)
 	}
-	if d.res[row].isHandle < noHandleLevel{
+	if d.res[row].isHandle < noHandleLevel {
 		// 设置此行实测类别
 		setResultCell(data, d.p.levelCol, d.res[row].maxLevel.string())
-	}else{
+	} else {
 		setResultCell(data, d.p.levelCol, d.res[row].isHandle.string())
 	}
 	// 设置超标评价信息
@@ -182,7 +182,7 @@ func (d *riv) handleKey(key, value string, r *result) *result {
 					r.coliform = appendString(key, "(", l.string(), ",超标", mul, "倍)")
 				default:
 					mul := calcMul(value, (*d.limits)[key][d.setLevel])
-					detail := appendString(key, "(", l.string(), ",超标", mul, "倍)")
+					detail := appendString(strings.ReplaceAll(key, "(河流)", ""), "(", l.string(), ",超标", mul, "倍)")
 					r.detail = append(r.detail, detail)
 				}
 			}
